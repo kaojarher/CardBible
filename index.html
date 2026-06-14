@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>聖經集卡</title>
+<title>聖經</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap');
 :root{
@@ -308,7 +308,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 <body>
 
 <div id="hdr">
-  <h1>聖經集卡</h1>
+  <h1>聖經</h1>
   <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
   <button onclick="exportSave()" style="background:var(--sur2);color:var(--txt);border:1px solid var(--purple);padding:4px 9px;border-radius:12px;font-size:.65rem;cursor:pointer;font-weight:700;">💾 匯出</button>
   <button onclick="importSave()" style="background:var(--sur2);color:var(--txt);border:1px solid var(--purple);padding:4px 9px;border-radius:12px;font-size:.65rem;cursor:pointer;font-weight:700;">📂 匯入</button>
@@ -348,7 +348,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
           <!-- stars -->
           <div class="pack-stars" id="pack-stars"></div>
           <div class="pack-title">✨ 神秘卡包</div>
-          <div class="pack-subtitle">聖經集卡遊戲</div>
+          <div class="pack-subtitle">聖經故事集卡</div>
           <!-- knife cut overlay -->
           <div class="knife-container" id="knife-container">
             <canvas id="knife-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
@@ -736,6 +736,9 @@ const DB = [
   {id:62, name:'AGE-FX Gundam AGE-FX',           grade:'SSR', sheet:'beach',  row:2, col:5, power:75},
   {id:63, name:'AGE-1T Gundam AGE-1 Titus',      grade:'SSR', sheet:'beach',  row:2, col:6, power:74},
 ];
+
+// 將卡片名稱統一改為「卡片編號」，避免更換卡圖主題後，內建的角色名稱與新圖片內容對不上
+DB.forEach(c => { c.name = '#' + String(c.id).padStart(2, '0'); });
 
 const S={
   coins:500, gems:30, owned:new Set(), skins:{}, levels:{},
