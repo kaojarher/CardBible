@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>聖經集卡</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap');
+:root{
+  --pink:#ff6eb4;--purple:#a855f7;--pdark:#7c3aed;
+  --gold:#f59e0b;--bg:#0f0a1e;--sur:#1a1130;--sur2:#241845;
+  --txt:#f0e6ff;--dim:#9d8fc0;
+  --basic:#64748b;--elf:#22c55e;--kemono:#f97316;--noble:#eab308;--rare:#a855f7;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;}
+
+#hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--sur);border-bottom:2px solid var(--purple);position:sticky;top:0;z-index:100;}
+#hdr h1{font-family:'Fredoka One',cursive;font-size:1.3rem;background:linear-gradient(90deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.cur{display:flex;gap:8px;font-weight:700;font-size:.8rem;}
+.cur span{display:flex;align-items:center;gap:3px;background:var(--sur2);padding:3px 9px;border-radius:20px;}
+
+#tabs{display:flex;background:var(--sur);border-bottom:1px solid var(--sur2);}
+.tab{flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-weight:700;font-size:.78rem;color:var(--dim);transition:all .2s;border-bottom:3px solid transparent;}
+.tab.active{color:var(--pink);border-bottom-color:var(--pink);}
+
+.scr{display:none;padding:14px;}.scr.active{display:block;}
+
+/* ── PACK ── */
+#pack-area{text-align:center;padding:20px 0;}
+
+/* pack wrapper with perspective */
+.pack-scene{width:220px;height:290px;perspective:700px;margin:0 auto 24px;position:relative;}
+.pack-3d{width:100%;height:100%;position:relative;transform-style:preserve-3d;transform:rotateY(-10deg) rotateX(5deg);transition:transform .3s;}
+.pack-scene:hover .pack-3d{transform:rotateY(-18deg) rotateX(8deg);}
+
+/* pack body */
+.pack-body{
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,#5b21b6,#7c3aed 40%,#a855f7 70%,#c084fc);
+  border-radius:14px;
+  border:3px solid #c084fc;
+  box-shadow:0 0 40px rgba(168,85,247,.7),inset 0 0 30px rgba(255,255,255,.08);
+  overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+}
+.pack-shine{position:absolute;inset:0;background:linear-gradient(135deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);animation:shine 2.5s infinite;}
+@keyframes shine{0%{transform:translateX(-120%) skewX(-20deg)}100%{transform:translateX(120%) skewX(-20deg)}}
+.pack-stars{position:absolute;inset:0;overflow:hidden;}
+.pack-star{position:absolute;width:4px;height:4px;background:#fff;border-radius:50%;animation:twinkle 2s infinite;}
+@keyframes twinkle{0%,100%{opacity:.1;transform:scale(.5)}50%{opacity:1;transform:scale(1)}}
+.pack-title{font-family:'Fredoka One',cursive;font-size:1.1rem;color:#fff;z-index:1;text-shadow:0 0 10px rgba(255,255,255,.5);}
+.pack-subtitle{font-size:.7rem;color:rgba(255,255,255,.7);z-index:1;}
+
+/* tear strip at top */
+.pack-top-strip{position:absolute;top:0;left:0;right:0;height:40px;background:linear-gradient(180deg,#4c1d95,#6d28d9);border-bottom:2px dashed rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;}
+.pack-notch{width:20px;height:20px;background:var(--bg);border-radius:50%;position:absolute;top:20px;}
+.pack-notch.left{left:-10px;}.pack-notch.right{right:-10px;}
+.pack-tear-line{position:absolute;top:40px;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.4) 0,rgba(255,255,255,.4) 6px,transparent 6px,transparent 12px);}
+
+/* pack side face for 3D */
+.pack-side{position:absolute;top:0;left:0;width:20px;height:100%;background:linear-gradient(90deg,#3b0764,#5b21b6);transform-origin:left;transform:rotateY(-90deg) translateX(-20px);border-radius:0 14px 14px 0;}
+.pack-bottom-face{position:absolute;bottom:-10px;left:0;right:0;height:10px;background:#3b0764;transform-origin:bottom;transform:rotateX(90deg) translateY(10px);border-radius:0 0 14px 14px;}
+
+/* KNIFE ANIMATION */
+.knife-container{position:absolute;inset:0;pointer-events:none;z-index:50;overflow:hidden;border-radius:14px;}
+.knife{position:absolute;opacity:0;transform-origin:bottom center;}
+/* The knife SVG path shown via inline */
+.cut-line{position:absolute;left:50%;top:0;width:2px;height:0;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,220,100,.8));transform:translateX(-50%);box-shadow:0 0 6px rgba(255,220,100,.8);}
+.pack-top-flap{position:absolute;top:0;left:0;bottom:0;width:50%;background:linear-gradient(90deg,#4c1d95,#6d28d9);transform-origin:left;transform:rotateY(0deg);border-radius:14px 0 0 14px;transition:transform .5s ease-in;}
+.pack-top-flap.open{transform:rotateY(-140deg);}
+
+/* open button */
+.btn-open{background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;border:none;padding:13px 36px;border-radius:30px;font-family:'Fredoka One',cursive;font-size:1.15rem;cursor:pointer;box-shadow:0 4px 20px rgba(168,85,247,.4);transition:all .2s;}
+.btn-open:hover{transform:translateY(-2px);}
+.btn-open:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.pack-cost{background:var(--sur2);display:inline-flex;align-items:center;gap:5px;padding:7px 18px;border-radius:30px;font-weight:700;margin-bottom:14px;border:1px solid var(--purple);}
+.pack-note{color:var(--dim);font-size:.72rem;margin-top:10px;}
+
+/* ── REVEAL OVERLAY ── */
+#reveal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:200;flex-direction:column;align-items:center;justify-content:center;}
+#reveal-ov.show{display:flex;}
+.flip-wrap{width:200px;height:310px;perspective:900px;cursor:pointer;margin-bottom:14px;}
+.flip-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.4,0,.2,1);}
+.flip-wrap.flipped .flip-inner{transform:rotateY(180deg);}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;overflow:hidden;}
+.face-back{background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:3.5rem;border:3px solid #c084fc;box-shadow:0 0 30px rgba(168,85,247,.8);}
+.face-back::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,255,255,.05) 10px,rgba(255,255,255,.05) 20px);}
+.face-front{transform:rotateY(180deg);border:3px solid var(--gold);box-shadow:0 0 30px rgba(245,158,11,.55);background:var(--sur2);display:flex;flex-direction:column;}
+.card-canvas-wrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#0a0510;}
+.card-canvas-wrap canvas{width:100%;height:100%;display:block;}
+.card-foot{padding:7px 9px;background:rgba(0,0,0,.7);}
+.c-name{font-weight:800;font-size:.88rem;}
+.tbadge{display:inline-block;padding:1px 7px;border-radius:20px;font-size:.6rem;font-weight:700;margin-top:2px;text-transform:uppercase;}
+.c-atk{font-size:1rem;font-weight:800;color:var(--gold);}
+.ai-sig{font-size:.6rem;color:var(--purple);margin-top:2px;}
+.rev-hint{color:var(--dim);font-size:.83rem;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── COLLECTION ── */
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.ch h2{font-family:'Fredoka One',cursive;font-size:1.15rem;color:var(--gold);}
+.pbar{background:var(--sur2);border-radius:20px;height:7px;overflow:hidden;margin-bottom:14px;}
+.pfill{height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:20px;transition:width .5s;}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.cc{aspect-ratio:100/176;border-radius:10px;overflow:hidden;position:relative;cursor:pointer;transition:transform .2s;border:2px solid transparent;}
+.cc:hover{transform:scale(1.06);z-index:1;}
+.cc.owned{border-color:var(--gold);}
+.cc.locked{background:var(--sur2);display:flex;align-items:center;justify-content:center;}
+.cc-art{width:100%;height:72%;display:flex;align-items:center;justify-content:center;background:#0a0510;}
+.cc-art canvas{width:100%;height:100%;display:block;}
+.cc-info{height:28%;padding:3px 6px;background:rgba(0,0,0,.72);}
+.cc-atk{font-weight:800;color:var(--gold);font-size:.76rem;}
+.cc-nm{font-size:.58rem;color:var(--dim);}
+.ccnum{position:absolute;top:3px;right:3px;font-size:.66rem;font-weight:800;background:rgba(0,0,0,.65);padding:1px 5px;border-radius:7px;color:var(--gold);}
+.aitag{position:absolute;top:3px;left:3px;background:rgba(168,85,247,.85);font-size:.52rem;padding:1px 5px;border-radius:6px;font-weight:700;}
+
+/* ── BATTLE ── */
+.arena{background:linear-gradient(180deg,#1a0a2e,#0f1a3e 50%,#1a0a2e);border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid var(--purple);}
+.bpname{font-family:'Fredoka One',cursive;font-size:.95rem;color:var(--pink);text-align:center;}
+.bhp{display:flex;align-items:center;gap:7px;margin-top:4px;}
+.hbar{flex:1;height:11px;background:var(--sur2);border-radius:20px;overflow:hidden;}
+.hfill{height:100%;border-radius:20px;transition:width .5s;}
+.hfill.p{background:linear-gradient(90deg,#22c55e,#86efac);}
+.hfill.e{background:linear-gradient(90deg,#ef4444,#fca5a5);}
+.htxt{font-size:.7rem;font-weight:700;min-width:44px;}
+.vsdiv{text-align:center;font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--gold);padding:6px 0;text-shadow:0 0 20px var(--gold);}
+.bfield{display:flex;gap:7px;justify-content:center;margin:10px 0;}
+.bslot{width:88px;height:143px;border-radius:10px;border:2px dashed var(--sur2);position:relative;overflow:hidden;background:rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;flex-direction:column;}
+.bslot.hc{border-style:solid;}
+.bslot canvas{width:100%;height:78%;display:block;}
+.bslot .bpow{position:absolute;top:3px;right:5px;font-weight:800;font-size:.82rem;color:var(--gold);text-shadow:0 0 6px #000;z-index:2;}
+.bslot .bnm{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.78);font-size:.55rem;font-weight:700;padding:2px;text-align:center;z-index:2;}
+.bslot .dflash{position:absolute;inset:0;background:rgba(239,68,68,.55);display:none;z-index:3;}
+.bslot.hit .dflash{display:block;animation:flash .4s;}
+@keyframes flash{0%,100%{opacity:0}50%{opacity:1}}
+.blog{background:rgba(0,0,0,.4);border-radius:10px;padding:9px;max-height:88px;overflow-y:auto;font-size:.73rem;margin-bottom:10px;border:1px solid var(--sur2);}
+.blog p{margin-bottom:3px;}.blog p:last-child{color:var(--pink);}
+.hlbl{font-size:.8rem;color:var(--dim);margin-bottom:7px;font-weight:700;}
+.hcards{display:flex;gap:7px;overflow-x:auto;padding-bottom:7px;}
+.hcard{min-width:70px;height:122px;border-radius:9px;border:2px solid var(--sur2);cursor:pointer;transition:all .2s;flex-shrink:0;position:relative;overflow:hidden;background:var(--sur2);display:flex;flex-direction:column;}
+.hcard canvas{width:100%;height:73%;display:block;}
+.hcard:hover{transform:translateY(-8px) scale(1.05);border-color:var(--gold);}
+.hcard.sel{border-color:var(--pink);transform:translateY(-12px);box-shadow:0 0 15px rgba(255,110,180,.5);}
+.hpow{font-size:.73rem;font-weight:800;color:var(--gold);position:absolute;top:2px;right:4px;z-index:2;text-shadow:0 0 4px #000;}
+.hnm{font-size:.52rem;font-weight:700;background:rgba(0,0,0,.78);padding:2px 3px;text-align:center;}
+.bctrl{display:flex;gap:7px;margin-top:10px;}
+.btn{flex:1;padding:11px;border-radius:12px;border:none;font-family:'Fredoka One',cursive;font-size:.93rem;cursor:pointer;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-p{background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;}
+.btn-s{background:var(--sur2);color:var(--txt);border:1px solid var(--purple);}
+.btn-d{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;}
+
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);background:linear-gradient(135deg,var(--pdark),var(--purple));color:#fff;padding:11px 22px;border-radius:30px;font-weight:700;font-size:.88rem;box-shadow:0 8px 30px rgba(168,85,247,.4);transition:transform .3s;z-index:999;text-align:center;max-width:300px;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#rmodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.87);z-index:300;align-items:center;justify-content:center;}
+#rmodal.show{display:flex;}
+.rbox{background:var(--sur);border:2px solid var(--gold);border-radius:20px;padding:28px 22px;text-align:center;max-width:300px;box-shadow:0 0 40px rgba(245,158,11,.3);}
+.rem{font-size:3.5rem;margin-bottom:10px;}
+.rtitle{font-family:'Fredoka One',cursive;font-size:1.9rem;margin-bottom:7px;}
+.rtitle.win{color:var(--gold);}.rtitle.lose{color:#ef4444;}
+.rdesc{color:var(--dim);margin-bottom:14px;}
+.rrwd{background:var(--sur2);padding:9px;border-radius:10px;margin-bottom:14px;font-weight:700;color:var(--gold);}
+.t-basic{background:var(--basic);}.t-elf{background:var(--elf);}.t-kemono{background:var(--kemono);}.t-noble{background:var(--noble);}.t-rare{background:var(--rare);}
+.particle{position:fixed;pointer-events:none;z-index:1000;font-size:1.2rem;animation:prise 1s ease-out forwards;}
+@keyframes prise{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-80px)}}
+::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-thumb{background:var(--purple);border-radius:4px;}
+
+/* ══════════════════════════════════════════
+   CARD GRADE EFFECTS  (R / SR / SSR)
+══════════════════════════════════════════ */
+
+/* ── R: Silver shimmer border ── */
+@keyframes r-shimmer{
+  0%,100%{box-shadow:0 0 6px #94a3b8,0 0 12px #94a3b880;}
+  50%     {box-shadow:0 0 14px #e2e8f0,0 0 28px #cbd5e1cc;}
+}
+.fx-r{
+  animation:r-shimmer 2.2s ease-in-out infinite;
+  border-color:#94a3b8 !important;
+  position:relative;overflow:hidden;
+}
+.fx-r::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:10;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);
+  animation:r-sweep 3s linear infinite;
+}
+@keyframes r-sweep{
+  0%  {transform:translateX(-110%)}
+  100%{transform:translateX(110%)}
+}
+
+/* ── SR: Gold holographic + sparkle ── */
+@keyframes sr-glow{
+  0%  {box-shadow:0 0 10px #f59e0b,0 0 24px #f59e0b66;}
+  33% {box-shadow:0 0 18px #fcd34d,0 0 40px #fde68acc;}
+  66% {box-shadow:0 0 14px #f97316,0 0 30px #f9731666;}
+  100%{box-shadow:0 0 10px #f59e0b,0 0 24px #f59e0b66;}
+}
+@keyframes sr-border{
+  0%  {border-color:#f59e0b;}
+  25% {border-color:#fde68a;}
+  50% {border-color:#fb923c;}
+  75% {border-color:#fcd34d;}
+  100%{border-color:#f59e0b;}
+}
+.fx-sr{
+  animation:sr-glow 2s ease-in-out infinite,sr-border 2s linear infinite;
+  position:relative;overflow:hidden;
+}
+.fx-sr::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:10;
+  background:linear-gradient(125deg,
+    transparent 20%,rgba(255,220,60,.3) 35%,
+    rgba(255,255,255,.5) 50%,
+    rgba(255,180,30,.3) 65%,transparent 80%);
+  animation:sr-holo 2.4s ease-in-out infinite;
+}
+@keyframes sr-holo{
+  0%  {transform:translateX(-120%) rotate(-10deg);opacity:0}
+  20% {opacity:1}
+  80% {opacity:1}
+  100%{transform:translateX(120%) rotate(-10deg);opacity:0}
+}
+/* floating sparkle dots */
+.fx-sr .card-spark{
+  position:absolute;width:4px;height:4px;border-radius:50%;
+  background:#fde68a;pointer-events:none;z-index:11;
+  animation:spark-float 2.6s ease-in-out infinite;
+}
+@keyframes spark-float{
+  0%  {opacity:0;transform:translateY(0) scale(0);}
+  30% {opacity:1;transform:translateY(-14px) scale(1);}
+  70% {opacity:.8;transform:translateY(-28px) scale(.7);}
+  100%{opacity:0;transform:translateY(-44px) scale(0);}
+}
+
+/* ── SSR: Rainbow holographic + intense particles ── */
+@keyframes ssr-rainbow{
+  0%  {border-color:#f472b6;box-shadow:0 0 16px #f472b6,0 0 40px #f472b666,0 0 80px #f472b633;}
+  16% {border-color:#a78bfa;box-shadow:0 0 16px #a78bfa,0 0 40px #a78bfa66,0 0 80px #a78bfa33;}
+  33% {border-color:#60a5fa;box-shadow:0 0 16px #60a5fa,0 0 40px #60a5fa66,0 0 80px #60a5fa33;}
+  50% {border-color:#34d399;box-shadow:0 0 16px #34d399,0 0 40px #34d39966,0 0 80px #34d39933;}
+  66% {border-color:#fbbf24;box-shadow:0 0 16px #fbbf24,0 0 40px #fbbf2466,0 0 80px #fbbf2433;}
+  83% {border-color:#f87171;box-shadow:0 0 16px #f87171,0 0 40px #f8717166,0 0 80px #f8717133;}
+  100%{border-color:#f472b6;box-shadow:0 0 16px #f472b6,0 0 40px #f472b666,0 0 80px #f472b633;}
+}
+.fx-ssr{
+  animation:ssr-rainbow 2s linear infinite;
+  position:relative;overflow:hidden;
+}
+.fx-ssr::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:10;
+  background:linear-gradient(120deg,
+    rgba(244,114,182,.45) 0%,
+    rgba(167,139,250,.45) 20%,
+    rgba(96,165,250,.45) 40%,
+    rgba(52,211,153,.45) 60%,
+    rgba(251,191,36,.45) 80%,
+    rgba(244,114,182,.45) 100%);
+  background-size:200% 200%;
+  animation:ssr-holo-move 3s linear infinite;
+  mix-blend-mode:screen;
+}
+@keyframes ssr-holo-move{
+  0%  {background-position:0% 0%;  opacity:.7;}
+  50% {background-position:100% 100%;opacity:1;}
+  100%{background-position:0% 0%;  opacity:.7;}
+}
+.fx-ssr::after{
+  content:'✦';position:absolute;top:4px;left:4px;font-size:.6rem;
+  animation:ssr-star-spin 2s linear infinite;
+  color:#fff;pointer-events:none;z-index:12;
+  text-shadow:0 0 6px #fff,0 0 12px #f472b6;
+}
+@keyframes ssr-star-spin{
+  0%  {transform:rotate(0deg)  scale(1);}
+  50% {transform:rotate(180deg) scale(1.4);}
+  100%{transform:rotate(360deg) scale(1);}
+}
+/* SSR floating sparkles */
+.fx-ssr .card-spark{
+  position:absolute;width:5px;height:5px;border-radius:50%;
+  pointer-events:none;z-index:11;
+  animation:ssr-spark 2s ease-in-out infinite;
+}
+@keyframes ssr-spark{
+  0%  {opacity:0;transform:translateY(0) scale(0) rotate(0deg);}
+  25% {opacity:1;transform:translateY(-16px) scale(1.2) rotate(90deg);}
+  75% {opacity:.9;transform:translateY(-34px) scale(.8) rotate(270deg);}
+  100%{opacity:0;transform:translateY(-56px) scale(0) rotate(360deg);}
+}
+
+/* ── zoom modal canvas wrapper for effects ── */
+#zoom-fx-wrap{
+  position:relative;display:inline-block;
+  border-radius:18px;overflow:visible;
+}
+#zoom-fx-wrap canvas{
+  display:block;border-radius:18px;
+  max-width:80vw;max-height:60vh;
+}
+
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+</head>
+<body>
+
+<div id="hdr">
+  <h1>聖經集卡</h1>
+  <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+  <button onclick="exportSave()" style="background:var(--sur2);color:var(--txt);border:1px solid var(--purple);padding:4px 9px;border-radius:12px;font-size:.65rem;cursor:pointer;font-weight:700;">💾 匯出</button>
+  <button onclick="importSave()" style="background:var(--sur2);color:var(--txt);border:1px solid var(--purple);padding:4px 9px;border-radius:12px;font-size:.65rem;cursor:pointer;font-weight:700;">📂 匯入</button>
+  <div id="gdrive-btns" style="display:flex;gap:5px;align-items:center">
+    <button id="btn-glogin" onclick="gSignIn()" style="background:linear-gradient(135deg,#4285f4,#0f9d58);color:#fff;border:none;padding:4px 9px;border-radius:12px;font-size:.65rem;cursor:pointer;font-weight:700;">☁️ Google登入</button>
+    <button id="btn-gup" onclick="gdriveSave()" style="display:none;background:linear-gradient(135deg,#4285f4,#34a853);color:#fff;border:none;padding:4px 9px;border-radius:12px;font-size:.65rem;cursor:pointer;font-weight:700;">☁️↑ 雲端存</button>
+    <button id="btn-gdown" onclick="gdriveLoad()" style="display:none;background:linear-gradient(135deg,#ea4335,#fbbc05);color:#fff;border:none;padding:4px 9px;border-radius:12px;font-size:.65rem;cursor:pointer;font-weight:700;">☁️↓ 雲端讀</button>
+    <button id="btn-gout" onclick="gSignOut()" style="display:none;background:var(--sur2);color:var(--dim);border:1px solid #444;padding:4px 9px;border-radius:12px;font-size:.6rem;cursor:pointer;">登出</button>
+  </div>
+</div><div class="cur">
+    <span>🪙<span id="coins">500</span></span>
+    <span>💎<span id="gems">30</span></span>
+  </div>
+</div>
+<div id="tabs">
+  <div class="tab active" onclick="switchTab('pack')">🎴 開包</div>
+  <div class="tab" onclick="switchTab('collection')">📚 圖鑑</div>
+  <div class="tab" onclick="switchTab('battle')">⚔️ 對戰</div>
+</div>
+
+<!-- PACK -->
+<div id="screen-pack" class="scr active">
+  <div id="pack-area">
+    <div class="pack-scene" id="pack-scene">
+      <div class="pack-3d" id="pack3d">
+        <!-- 3D side faces -->
+        <div class="pack-side"></div>
+        <div class="pack-bottom-face"></div>
+        <!-- main body -->
+        <div class="pack-body" id="packbody">
+          <div class="pack-top-strip">
+            <div class="pack-notch left"></div>
+            <div class="pack-notch right"></div>
+          </div>
+          <div class="pack-tear-line"></div>
+          <div class="pack-shine"></div>
+          <!-- stars -->
+          <div class="pack-stars" id="pack-stars"></div>
+          <div class="pack-title">✨ 神秘卡包</div>
+          <div class="pack-subtitle">聖經集卡遊戲</div>
+          <!-- knife cut overlay -->
+          <div class="knife-container" id="knife-container">
+            <canvas id="knife-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
+          </div>
+          <!-- top flap that opens -->
+          <div class="pack-top-flap" id="top-flap"></div>
+        </div>
+      </div>
+    </div>
+    <div class="pack-cost">🪙 100 枚硬幣</div><br>
+    <button class="btn-open" id="open-btn" onclick="openPack()">✂️ 拆開卡包！</button>
+    <p class="pack-note">✨ N 5% · R 30% · SR 15% · SSR 5%</p>
+  </div>
+</div>
+
+<!-- COLLECTION -->
+<div id="screen-collection" class="scr">
+  <div class="ch">
+    <h2>📚 收藏圖鑑</h2>
+    <span style="font-size:.83rem;color:var(--dim)"><span id="owned-c">0</span>/63</span>
+  </div>
+  <div class="pbar"><div class="pfill" id="prog" style="width:0%"></div></div>
+  <div class="cgrid" id="cgrid"></div>
+</div>
+
+<!-- BATTLE -->
+<div id="screen-battle" class="scr">
+  <div class="arena">
+    <div style="margin-bottom:6px">
+      <div class="bpname" id="ename">👹 對手</div>
+      <div class="bhp"><span class="htxt" id="ehptxt">30/30</span><div class="hbar"><div class="hfill e" id="ehpbar" style="width:100%"></div></div></div>
+    </div>
+    <div class="bfield">
+      <div class="bslot" id="es0"><span style="color:var(--dim);font-size:.65rem">空</span></div>
+      <div class="bslot" id="es1"><span style="color:var(--dim);font-size:.65rem">空</span></div>
+      <div class="bslot" id="es2"><span style="color:var(--dim);font-size:.65rem">空</span></div>
+    </div>
+    <div class="vsdiv">⚔️ VS ⚔️</div>
+    <div class="bfield">
+      <div class="bslot" id="ps0" onclick="placeCard(0)"><span style="color:var(--dim);font-size:.65rem">放置</span></div>
+      <div class="bslot" id="ps1" onclick="placeCard(1)"><span style="color:var(--dim);font-size:.65rem">放置</span></div>
+      <div class="bslot" id="ps2" onclick="placeCard(2)"><span style="color:var(--dim);font-size:.65rem">放置</span></div>
+    </div>
+    <div>
+      <div class="bpname">💖 你</div>
+      <div class="bhp"><div class="hbar"><div class="hfill p" id="phpbar" style="width:100%"></div></div><span class="htxt" id="phptxt">30/30</span></div>
+    </div>
+  </div>
+  <div class="blog" id="blog"><p>選擇手牌放置到場地，最多 3 張，然後攻擊！</p></div>
+  <div class="hlbl">手牌（點選 → 再點場地放置）</div>
+  <div class="hcards" id="hcards"></div>
+  <div class="bctrl">
+    <button class="btn btn-s" onclick="drawCard()">🃏 抽牌</button>
+    <button class="btn btn-p" onclick="doAttack()">⚔️ 攻擊！</button>
+    <button class="btn btn-d" onclick="startBattle()">🔄 重開</button>
+  </div>
+</div>
+
+<!-- REVEAL -->
+<div id="reveal-ov">
+  <div class="flip-wrap" id="flipwrap" onclick="flipCard()">
+    <div class="flip-inner">
+      <div class="face face-back">✨</div>
+      <div class="face face-front">
+        <div class="card-canvas-wrap"><canvas id="rev-canvas" width="200" height="254"></canvas></div>
+        <div class="card-foot">
+          <div class="c-name" id="rev-name">—</div>
+          <div><span class="tbadge" id="rev-type">—</span></div>
+          <div class="c-atk" id="rev-atk">ATK —</div>
+          <div class="ai-sig">🎨 Canvas AI Art</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="rev-hint" id="rev-hint">點擊翻牌查看！</p>
+  <button class="btn btn-p" id="collect-btn" style="display:none;margin-top:12px;padding:10px 28px;" onclick="collectCard()">收藏並繼續</button>
+</div>
+
+<!-- RESULT -->
+<div id="rmodal">
+  <div class="rbox">
+    <div class="rem" id="rem">🏆</div>
+    <div class="rtitle" id="rtitle">勝利！</div>
+    <div class="rdesc" id="rdesc">擊敗了對手！</div>
+    <div class="rrwd" id="rrwd">🪙 +200</div>
+    <button class="btn btn-p" onclick="closeResult()">繼續</button>
+  </div>
+</div>
+
+<!-- ZOOM MODAL -->
+<div id="zoom-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px;" onclick="document.getElementById('zoom-modal').style.display='none'">
+  <div id="zoom-fx-wrap">
+    <canvas id="zoom-canvas" width="252" height="320"></canvas>
+  </div>
+  <div id="zoom-info" style="text-align:center;color:#fff;"></div>
+  <div style="font-size:.7rem;color:rgba(255,255,255,.4)">點擊任意處關閉</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+
+function playKnifeAnimation(onDone) {
+  const container = document.getElementById('knife-container');
+  const canvas = document.getElementById('knife-canvas');
+  const packEl = document.getElementById('packbody');
+  const rect = packEl.getBoundingClientRect();
+  canvas.width = rect.width || 220;
+  canvas.height = rect.height || 290;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  let progress = 0; // 0→1 knife travels left→right
+  let cutX = 0;
+  let done = false;
+  const DURATION = 700; // ms
+  let startTime = null;
+
+  // Knife SVG-style shape drawn on canvas — rotated 90° for horizontal cut
+  function drawKnife(x, y, angle) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.PI / 2 + angle); // rotate 90° so blade points right
+    ctx.globalAlpha = 0.95;
+
+    // Hand / grip
+    ctx.fillStyle = '#e8d5a3';
+    ctx.beginPath();
+    ctx.roundRect(-6, 12, 12, 28, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#c4a87a';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Finger 1
+    ctx.fillStyle = '#fdbcb4';
+    ctx.beginPath();
+    ctx.ellipse(-7, 18, 6, 4, -0.3, 0, Math.PI*2);
+    ctx.fill();
+    // Finger 2
+    ctx.beginPath();
+    ctx.ellipse(-7, 26, 6, 4, -0.3, 0, Math.PI*2);
+    ctx.fill();
+    // Finger 3
+    ctx.beginPath();
+    ctx.ellipse(-7, 34, 6, 4, -0.3, 0, Math.PI*2);
+    ctx.fill();
+    // Thumb
+    ctx.beginPath();
+    ctx.ellipse(8, 22, 5, 3, 0.4, 0, Math.PI*2);
+    ctx.fill();
+
+    // Blade guard
+    ctx.fillStyle = '#9ca3af';
+    ctx.beginPath();
+    ctx.roundRect(-8, 8, 16, 6, 2);
+    ctx.fill();
+
+    // Blade body
+    const bladeGrd = ctx.createLinearGradient(-4, -30, 4, -30);
+    bladeGrd.addColorStop(0, '#e5e7eb');
+    bladeGrd.addColorStop(0.4, '#ffffff');
+    bladeGrd.addColorStop(0.6, '#f3f4f6');
+    bladeGrd.addColorStop(1, '#9ca3af');
+    ctx.fillStyle = bladeGrd;
+    ctx.beginPath();
+    ctx.moveTo(-4, 8);
+    ctx.lineTo(-1, -28);
+    ctx.lineTo(1.5, -32);
+    ctx.lineTo(4, -28);
+    ctx.lineTo(4, 8);
+    ctx.fill();
+
+    // Blade shine
+    ctx.strokeStyle = 'rgba(255,255,255,.8)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-1, 7);
+    ctx.lineTo(-0.5, -30);
+    ctx.stroke();
+
+    // Blade tip glint
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    ctx.ellipse(1.5, -32, 2, 1, 0.2, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function frame(ts) {
+    if (!startTime) startTime = ts;
+    progress = Math.min(1, (ts - startTime) / DURATION);
+    // ease in-out
+    const eased = progress < 0.5 ? 2*progress*progress : -1+(4-2*progress)*progress;
+    cutX = eased * W;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Draw the cut line trail (horizontal)
+    if (cutX > 0) {
+      const lineGrd = ctx.createLinearGradient(0, H/2, cutX, H/2);
+      lineGrd.addColorStop(0, 'rgba(255,255,255,.0)');
+      lineGrd.addColorStop(0.7, 'rgba(255,230,100,.6)');
+      lineGrd.addColorStop(1, 'rgba(255,255,255,.9)');
+      ctx.strokeStyle = lineGrd;
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(255,220,80,.9)';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(0, H/2);
+      ctx.lineTo(cutX, H/2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // Draw knife at cut position (horizontal travel)
+    const kx = cutX;
+    const ky = H/2 + Math.sin(progress * Math.PI * 2) * 3; // slight wobble
+    drawKnife(kx, ky, Math.sin(progress * Math.PI) * 0.08);
+
+    // Sparkle at cut point
+    if (progress > 0.1 && progress < 0.9) {
+      for (let i = 0; i < 3; i++) {
+        const sx = kx + (Math.random()-0.5)*8;
+        const sy = ky + (Math.random()-0.5)*12;
+        ctx.save();
+        ctx.globalAlpha = Math.random() * 0.7;
+        ctx.fillStyle = ['#fff','#ffd700','#ffec80'][Math.floor(Math.random()*3)];
+        ctx.beginPath();
+        ctx.arc(sx, sy, Math.random()*2+0.5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      // Final: open the flap
+      ctx.clearRect(0, 0, W, H);
+      // Draw final complete cut line (horizontal)
+      ctx.strokeStyle = 'rgba(255,230,100,.7)';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(255,220,80,.8)';
+      ctx.shadowBlur = 8;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(0, H/2); ctx.lineTo(W, H/2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      setTimeout(() => {
+        document.getElementById('top-flap').classList.add('open');
+        setTimeout(() => {
+          ctx.clearRect(0, 0, W, H);
+          onDone();
+        }, 500);
+      }, 150);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+// ─── INIT pack stars ───
+(function initStars(){
+  const s = document.getElementById('pack-stars');
+  for(let i=0;i<12;i++){
+    const star=document.createElement('div');
+    star.className='pack-star';
+    star.style.cssText=`left:${Math.random()*90+5}%;top:${Math.random()*90+5}%;animation-delay:${Math.random()*2}s;animation-duration:${1.5+Math.random()}s;width:${2+Math.random()*3}px;height:${2+Math.random()*3}px`;
+    s.appendChild(star);
+  }
+})();
+
+
+// ═══════════════════════════════════════════════
+//  SPRITE SHEET IMAGES (3 sheets x 3x7 grid)
+// ═══════════════════════════════════════════════
+const IMGS = {};
+function loadImages(cb) {
+  const srcs = {
+    normal: "2normal.jpg",
+    bikini: "2bikini.jpg",
+    beach:  "2beach.jpg"
+  };
+  let done = 0;
+  Object.entries(srcs).forEach(([k,v]) => {
+    const img = new Image();
+    img.onload = () => { IMGS[k] = img; if(++done === 3) cb(); };
+    img.onerror = () => { console.warn('img load fail',k); if(++done === 3) cb(); };
+    img.src = v;
+  });
+}
+
+function drawCardSprite(canvas, sheetKey, row, col) {
+  const ctx = canvas.getContext('2d');
+  const img = IMGS[sheetKey];
+  if (!img) {
+    ctx.fillStyle = '#2a1a4a'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#a855f7'; ctx.font='20px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('?', canvas.width/2, canvas.height/2); return;
+  }
+  const sw = img.naturalWidth / 7;
+  const sh = img.naturalHeight / 3;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img, col*sw, row*sh, sw, sh, 0, 0, canvas.width, canvas.height);
+}
+
+// ═══════════════════════════════════════════════
+//  CARD DATABASE - 21 cards, 4 grades
+// ═══════════════════════════════════════════════
+const GRADE = {
+  N:   {label:'N',   color:'#64748b', border:'#94a3b8', glow:'rgba(100,116,139,.4)', packOdds:0.50},
+  R:   {label:'R',   color:'#22c55e', border:'#4ade80', glow:'rgba(34,197,94,.4)',   packOdds:0.30},
+  SR:  {label:'SR',  color:'#f59e0b', border:'#fbbf24', glow:'rgba(245,158,11,.4)',  packOdds:0.15},
+  SSR: {label:'SSR', color:'#a855f7', border:'#c084fc', glow:'rgba(168,85,247,.5)',  packOdds:0.05},
+};
+const TC = {N:'#64748b',R:'#22c55e',SR:'#f59e0b',SSR:'#a855f7'};
+
+const DB = [
+  {id:1,  name:'RX-78-2 Federation Hero',       grade:'N',   sheet:'normal', row:0, col:0, power:20},
+  {id:2,  name:'MS-06F Zaku II',                 grade:'N',   sheet:'normal', row:0, col:1, power:11},
+  {id:3,  name:'MSN-02 Zeong',                   grade:'N',   sheet:'normal', row:0, col:2, power:10},
+  {id:4,  name:'MSZ-006 Zeta Gundam',            grade:'N',   sheet:'normal', row:0, col:3, power:14},
+  {id:5,  name:'RX-178 Gundam MK-II Titans',     grade:'N',   sheet:'normal', row:0, col:4, power:13},
+  {id:6,  name:'MS-09B Dom Tropen',              grade:'N',   sheet:'normal', row:0, col:5, power:13},
+  {id:7,  name:'RGM-79 GM',                      grade:'N',   sheet:'normal', row:0, col:6, power:12},
+  {id:8,  name:'RX-93 Nu Gundam HWS',            grade:'R',   sheet:'normal', row:1, col:0, power:39},
+  {id:9,  name:'MSN-04 Sazabi Ver.Ka',           grade:'R',   sheet:'normal', row:1, col:1, power:29},
+  {id:10, name:'GAT-X105 Strike Gundam',         grade:'R',   sheet:'normal', row:1, col:2, power:38},
+  {id:11, name:'GAT-X303 Aegis Gundam',          grade:'R',   sheet:'normal', row:1, col:3, power:39},
+  {id:12, name:'ASW-G-08 Gundam Barbatos Lupus', grade:'R',   sheet:'normal', row:1, col:4, power:36},
+  {id:13, name:'GN-001 Gundam Exia Repair II',   grade:'R',   sheet:'normal', row:1, col:5, power:29},
+  {id:14, name:'GNT-0000 00 Qan[T]',            grade:'R',   sheet:'normal', row:1, col:6, power:37},
+  {id:15, name:'MSN-06S Sinanju Custom',         grade:'SR',  sheet:'normal', row:2, col:0, power:61},
+  {id:16, name:'GAT-X207 Blitz Gundam',          grade:'SR',  sheet:'normal', row:2, col:1, power:49},
+  {id:17, name:"MS-14S Gelgoog Char's",          grade:'SR',  sheet:'normal', row:2, col:2, power:48},
+  {id:18, name:'ZGMF-X19A Infinite Justice',     grade:'SR',  sheet:'normal', row:2, col:3, power:50},
+  {id:19, name:'ZGMF-X20A Strike Freedom',       grade:'SR',  sheet:'normal', row:2, col:4, power:54},
+  {id:20, name:'GN-0000 00 Raiser',              grade:'SR',  sheet:'normal', row:2, col:5, power:55},
+  {id:21, name:'AGE-2 Gundam AGE-2 Normal',      grade:'SR',  sheet:'normal', row:2, col:6, power:64},
+  {id:22, name:'Lilah EFSF Officer',             grade:'R',   sheet:'bikini', row:0, col:0, power:39},
+  {id:23, name:'Amuro Ray RX-78-2 Pilot',        grade:'R',   sheet:'bikini', row:0, col:1, power:30},
+  {id:24, name:"Sleggar Law G-Fighter",          grade:'R',   sheet:'bikini', row:0, col:2, power:38},
+  {id:25, name:"Char Aznable Red Comet",         grade:'R',   sheet:'bikini', row:0, col:3, power:33},
+  {id:26, name:'Lalah Sune Elmeth',              grade:'R',   sheet:'bikini', row:0, col:4, power:41},
+  {id:27, name:'Aina Sahalin Principality Ace',  grade:'R',   sheet:'bikini', row:0, col:5, power:40},
+  {id:28, name:'Sayla Mass EFSF Communications', grade:'R',   sheet:'bikini', row:0, col:6, power:41},
+  {id:29, name:'Kamille Bidan AEUG Protagonist', grade:'SR',  sheet:'bikini', row:1, col:0, power:67},
+  {id:30, name:'Scirocco Paptimus Custom',       grade:'SR',  sheet:'bikini', row:1, col:1, power:63},
+  {id:31, name:'Judau Ashta ZZ Gundam Crew',     grade:'SR',  sheet:'bikini', row:1, col:2, power:57},
+  {id:32, name:'Zinnerman Garencieres Captain',  grade:'SR',  sheet:'bikini', row:1, col:3, power:64},
+  {id:33, name:'Banagher Links Unicorn Pilot',   grade:'SR',  sheet:'bikini', row:1, col:4, power:58},
+  {id:34, name:'Tieria Erde Innovade Meister',   grade:'SR',  sheet:'bikini', row:1, col:5, power:50},
+  {id:35, name:'Athrun Zala ZAFT Elite',         grade:'SR',  sheet:'bikini', row:1, col:6, power:55},
+  {id:36, name:'Rau Le Creuset Creuset Team',    grade:'SSR', sheet:'bikini', row:2, col:0, power:83},
+  {id:37, name:'Gilbert Durandal ZAFT Chairman', grade:'SSR', sheet:'bikini', row:2, col:1, power:80},
+  {id:38, name:"Kira Yamato FREEDOM Pilot",      grade:'SSR', sheet:'bikini', row:2, col:2, power:78},
+  {id:39, name:"Graham Aker Mister Bushido",     grade:'SSR', sheet:'bikini', row:2, col:3, power:74},
+  {id:40, name:'Setsuna F. Seiei Exia Meister',  grade:'SSR', sheet:'bikini', row:2, col:4, power:76},
+  {id:41, name:'Master Asia Undefeated of East', grade:'SSR', sheet:'bikini', row:2, col:5, power:80},
+  {id:42, name:'Syd Barrett G-UNIT F-Type',      grade:'SSR', sheet:'bikini', row:2, col:6, power:73},
+  {id:43, name:'RGM-79SP GM Sniper II',          grade:'R',   sheet:'beach',  row:0, col:0, power:33},
+  {id:44, name:'RX-78-4 Gundam Unit 4',          grade:'R',   sheet:'beach',  row:0, col:1, power:38},
+  {id:45, name:'RX-78GP01Fb Gundam GP01Fb',      grade:'R',   sheet:'beach',  row:0, col:2, power:33},
+  {id:46, name:'MS-06R-1A High Mobility Zaku II',grade:'R',   sheet:'beach',  row:0, col:3, power:37},
+  {id:47, name:'RX-18E Kämpfer',                 grade:'R',   sheet:'beach',  row:0, col:4, power:37},
+  {id:48, name:'MSN-03 Jagd Doga',               grade:'R',   sheet:'beach',  row:0, col:5, power:41},
+  {id:49, name:'MSN-04II Nightingale',           grade:'R',   sheet:'beach',  row:0, col:6, power:36},
+  {id:50, name:'RX-0 Unicorn Gundam Destory',    grade:'SR',  sheet:'beach',  row:1, col:0, power:53},
+  {id:51, name:'RX-0[N] Unicorn 02 Banshee Norn',grade:'SR', sheet:'beach',  row:1, col:1, power:66},
+  {id:52, name:'FA-78 Full Armor Gundam',        grade:'SR',  sheet:'beach',  row:1, col:2, power:69},
+  {id:53, name:'MSZ-010 ZZ Gundam',              grade:'SR',  sheet:'beach',  row:1, col:3, power:55},
+  {id:54, name:'OZ-13MS Epyon Gundam',           grade:'SR',  sheet:'beach',  row:1, col:4, power:64},
+  {id:55, name:'GAT-X103 Buster Gundam',         grade:'SR',  sheet:'beach',  row:1, col:5, power:54},
+  {id:56, name:'ZGMF-X13A Providence Gundam',    grade:'SR',  sheet:'beach',  row:1, col:6, power:69},
+  {id:57, name:'ASW-G-11 Gundam Gusion Rebake',  grade:'SSR', sheet:'beach',  row:2, col:0, power:82},
+  {id:58, name:'GN-0000GNHW/7D 00 Seven Sword/G',grade:'SSR',sheet:'beach',  row:2, col:1, power:92},
+  {id:59, name:'GN-000 O Gundam',                grade:'SSR', sheet:'beach',  row:2, col:2, power:84},
+  {id:60, name:'GN-002 Gundam Dynames',          grade:'SSR', sheet:'beach',  row:2, col:3, power:91},
+  {id:61, name:'GN-003 Gundam Kyrios',           grade:'SSR', sheet:'beach',  row:2, col:4, power:79},
+  {id:62, name:'AGE-FX Gundam AGE-FX',           grade:'SSR', sheet:'beach',  row:2, col:5, power:75},
+  {id:63, name:'AGE-1T Gundam AGE-1 Titus',      grade:'SSR', sheet:'beach',  row:2, col:6, power:74},
+];
+
+const S={
+  coins:500, gems:30, owned:new Set(), skins:{}, levels:{},
+  hand:[], pField:[null,null,null], eField:[null,null,null],
+  pHP:30, eHP:30, maxHP:30, selIdx:-1, active:false, pending:null,
+};
+const rand=a=>a[Math.floor(Math.random()*a.length)];
+const ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+function particles(em,n=5){for(let i=0;i<n;i++)setTimeout(()=>{const e=document.createElement('div');e.className='particle';e.textContent=rand(em);e.style.cssText=`left:${ri(10,90)}vw;top:${ri(20,80)}vh`;document.body.appendChild(e);setTimeout(()=>e.remove(),1000);},i*80);}
+function updCur(){document.getElementById('coins').textContent=S.coins;document.getElementById('gems').textContent=S.gems;}
+
+function drawCardOnCanvas(canvas, card) {
+  drawCardSprite(canvas, card.sheet, card.row, card.col);
+}
+
+function switchTab(t){
+  ['pack','collection','battle'].forEach((n,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('active',n===t);
+    document.getElementById('screen-'+n).classList.toggle('active',n===t);
+  });
+  if(t==='collection')renderColl();
+  if(t==='battle')renderHand();
+}
+
+// ─── PACK ───
+function openPack(){
+  if(S.coins<100){toast('❌ 硬幣不足！');return;}
+  const btn=document.getElementById('open-btn');
+  btn.disabled=true;
+  S.coins-=100; updCur();
+  document.getElementById('top-flap').classList.remove('open');
+  const r=Math.random();
+  let pool;
+  if(r<0.05) pool=DB.filter(c=>c.grade==='SSR');
+  else if(r<0.20) pool=DB.filter(c=>c.grade==='SR');
+  else if(r<0.50) pool=DB.filter(c=>c.grade==='R');
+  else pool=DB.filter(c=>c.grade==='N');
+  S.pending=rand(pool);
+  playKnifeAnimation(()=>{
+    const ov=document.getElementById('reveal-ov');
+    ov.classList.add('show');
+    document.getElementById('flipwrap').classList.remove('flipped');
+    document.getElementById('collect-btn').style.display='none';
+    document.getElementById('rev-hint').style.display='block';
+    const card=S.pending;
+    document.getElementById('rev-name').textContent=card.name;
+    document.getElementById('rev-atk').textContent='ATK: '+card.power;
+    const tb=document.getElementById('rev-type');
+    const gd=GRADE[card.grade];
+    tb.textContent=card.grade; tb.style.background=gd.color; tb.style.color='#fff';
+    const cv=document.getElementById('rev-canvas');
+    cv.width=200; cv.height=254;
+    drawCardOnCanvas(cv,card);
+    btn.disabled=false;
+  });
+}
+
+function flipCard(){
+  const fw=document.getElementById('flipwrap');
+  if(!fw.classList.contains('flipped')){
+    fw.classList.add('flipped');
+    document.getElementById('rev-hint').style.display='none';
+    document.getElementById('collect-btn').style.display='inline-block';
+    particles(['✨','💖','⭐','🌸','💫']);
+  }
+}
+
+function collectCard(){
+  const c=S.pending;
+  const isNew=!S.owned.has(c.id);
+  S.owned.add(c.id);
+  if(S.hand.length<10)S.hand.push({...c});
+  document.getElementById('reveal-ov').classList.remove('show');
+  if(isNew){toast('🎉 新卡！獲得【'+c.name+'】！');particles(['🎴','✨','💖','🌟'],8);}
+  else{S.coins+=20;updCur();toast('♻️ 重複卡！換取 🪙 20');}
+}
+
+// ─── CARD GRADE EFFECTS ───
+const FX_SPARK_COLORS={
+  SR:['#fde68a','#fcd34d','#fbbf24','#f59e0b'],
+  SSR:['#f472b6','#a78bfa','#60a5fa','#34d399','#fbbf24','#f87171'],
+};
+function applyCardFx(el,grade){
+  // remove any existing fx
+  el.classList.remove('fx-r','fx-sr','fx-ssr');
+  el.querySelectorAll('.card-spark').forEach(s=>s.remove());
+  if(grade==='N') return;
+  if(grade==='R'){
+    el.classList.add('fx-r');
+    return;
+  }
+  const colors=FX_SPARK_COLORS[grade];
+  const count=grade==='SSR'?6:3;
+  for(let i=0;i<count;i++){
+    const s=document.createElement('div');
+    s.className='card-spark';
+    const rect=el.getBoundingClientRect();
+    s.style.left=`${15+Math.random()*70}%`;
+    s.style.bottom=`${5+Math.random()*30}%`;
+    s.style.background=colors[i%colors.length];
+    s.style.animationDelay=`${(i/count)*2.5}s`;
+    if(grade==='SSR'){
+      s.style.boxShadow=`0 0 6px ${colors[i%colors.length]}`;
+    }
+    el.appendChild(s);
+  }
+  if(grade==='SR') el.classList.add('fx-sr');
+  if(grade==='SSR') el.classList.add('fx-ssr');
+}
+
+// ─── COLLECTION ───
+function renderColl(){
+  const g=document.getElementById('cgrid');g.innerHTML='';
+  document.getElementById('owned-c').textContent=S.owned.size;
+  document.getElementById('prog').style.width=(S.owned.size/DB.length*100)+'%';
+  ['N','R','SR','SSR'].forEach(gr=>{
+    const cards=DB.filter(c=>c.grade===gr);
+    const hdr=document.createElement('div');
+    hdr.style.cssText='grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:12px;padding:4px 0;border-bottom:1px solid var(--sur2);';
+    const gd=GRADE[gr];
+    const grDesc={N:'基礎',R:'稀有',SR:'超稀有',SSR:'最稀有'};
+    hdr.innerHTML=`<span style="background:${gd.color};color:#fff;padding:2px 12px;border-radius:20px;font-weight:800;font-size:.82rem;letter-spacing:1px;">${gr}</span><span style="font-size:.7rem;color:${gd.color};font-weight:700;">${grDesc[gr]}</span><span style="font-size:.72rem;color:var(--dim);margin-left:auto">${cards.filter(c=>S.owned.has(c.id)).length}/${cards.length}</span>`;
+    g.appendChild(hdr);
+    cards.forEach(card=>{
+      const owned=S.owned.has(card.id);
+      const el=document.createElement('div');
+      el.className='cc '+(owned?'owned':'locked');
+      const gd2=GRADE[card.grade];
+      if(owned){
+        el.style.background=`linear-gradient(180deg,${gd2.color}33,${gd2.color}66)`;
+        el.style.borderColor=gd2.border;
+        el.style.boxShadow=`0 0 10px ${gd2.glow}`;
+        const cvId='ccv'+card.id;
+        const skBtns='';
+        el.ondblclick=(e)=>{e.stopPropagation();zoomCard(card);};
+        el.innerHTML=`
+          <div class="cc-art"><canvas id="${cvId}" width="100" height="127"></canvas></div>
+          <div class="cc-info">
+            <div class="cc-atk">⚔️ ${card.power} <span style="font-size:.55rem;color:#a855f7">Lv.${getCardLv(card.id).lv}</span></div>
+            <div class="cc-nm">${card.name}</div>
+
+          </div>
+          <div class="ccnum">#${card.id}</div>
+          <div class="aitag" style="background:${gd2.color};color:#fff">${gr}</div>
+        `;
+        setTimeout(()=>{const cv=document.getElementById(cvId);if(cv){cv.width=100;cv.height=127;drawCardOnCanvas(cv,card);}applyCardFx(el,card.grade);},0);
+      } else {
+        el.innerHTML=`<div style="text-align:center"><div style="font-size:1.8rem;opacity:.3">🔒</div><div style="font-size:.58rem;color:var(--dim);margin-top:4px">#${card.id}</div><div style="font-size:.55rem;background:${gd2.color};display:inline-block;padding:1px 6px;border-radius:10px;margin-top:3px;color:#fff">${gr}</div></div>`;
+      }
+      g.appendChild(el);
+    });
+  });
+}
+
+function setSkin(cardId,skin){
+  S.skins[cardId]=skin;
+  renderColl();
+  renderHand();
+}
+
+// ─── BATTLE ───
+const ENEMIES=[
+  {name:'👹 Talia',   hp:30,  ids:[1,2,3,4,5]},
+  {name:'🐲 Drake',   hp:55,  ids:[8,9,10,11,12]},
+  {name:'🔥 Blaze',   hp:80,  ids:[15,16,17,18,19]},
+  {name:'👑 Empress', hp:110, ids:[22,29,36,43,50]},
+  {name:'⚡ Storm',   hp:140, ids:[43,44,45,57,58,59]},
+  {name:'🌙 Luna',    hp:170, ids:[57,58,59,60,61,62,63]},
+];
+let enemy=ENEMIES[0];
+
+function startBattle(){
+  enemy=rand(ENEMIES);
+  S.pHP=S.maxHP=30; S.eHP=enemy.hp;
+  S.pField=[null,null,null]; S.eField=[null,null,null];
+  S.selIdx=-1; S.active=true;
+  document.getElementById('ename').textContent=enemy.name;
+  updHP(); renderField(); renderHand();
+  logB('🆕 新對戰！對手：'+enemy.name);
+  setTimeout(enemyPlay,600);
+}
+
+function enemyPlay(){
+  const pool=enemy.ids.map(id=>DB.find(c=>c.id===id)).filter(Boolean);
+  S.eField=[rand(pool),rand(pool),rand(pool)];
+  renderField();
+  logB(enemy.name+' 出牌完畢！');
+}
+
+function renderField(){
+  [0,1,2].forEach(i=>{renderSlot('es'+i,S.eField[i],false);renderSlot('ps'+i,S.pField[i],true);});
+}
+
+function renderSlot(id,card,clickable){
+  const el=document.getElementById(id);
+  if(!card){
+    el.className='bslot'; el.style.background='rgba(0,0,0,.2)'; el.style.borderColor='var(--sur2)';
+    el.innerHTML=`<span style="color:var(--dim);font-size:.65rem">${clickable?'放置':'空'}</span>`;
+    return;
+  }
+  const gd=GRADE[card.grade];
+  el.className='bslot hc';
+  el.style.background=`linear-gradient(180deg,${gd.color}44,${gd.color}22)`;
+  el.style.borderColor=gd.border;
+  const slotIdx=['ps0','ps1','ps2'].indexOf(id);
+  if(clickable && slotIdx>=0){
+    el.ondblclick=()=>{
+      if(!S.active) return;
+      const c=S.pField[slotIdx];
+      if(!c) return;
+      S.pField[slotIdx]=null;
+      if(S.hand.length<10) S.hand.push(c);
+      renderField(); renderHand();
+      logB('【'+c.name+'】退回手牌');
+    };
+  }
+  const cvId='bscv'+id+card.id;
+  el.innerHTML=`
+    <div class="dflash"></div>
+    <div class="bpow" id="pow_${id}">${card.power}</div>
+    <canvas id="${cvId}" width="88" height="112" style="width:100%;height:78%;display:block;"></canvas>
+    <div class="bnm">${card.name}</div>
+    <div style="font-size:.42rem;color:rgba(255,255,255,.5);margin-top:1px">雙擊退陣</div>
+  `;
+  setTimeout(()=>{const cv=document.getElementById(cvId);if(cv){cv.width=88;cv.height=112;drawCardOnCanvas(cv,card);}applyCardFx(el,card.grade);},0);
+}
+
+function renderHand(){
+  const c=document.getElementById('hcards');c.innerHTML='';
+  if(!S.hand.length){c.innerHTML='<span style="color:var(--dim);font-size:.76rem">手牌空了！先去開包！</span>';return;}
+  S.hand.forEach((card,i)=>{
+    const gd=GRADE[card.grade];
+    const el=document.createElement('div');
+    el.className='hcard'+(S.selIdx===i?' sel':'');
+    el.style.borderColor=S.selIdx===i?'var(--pink)':gd.border;
+    const cvId='hccv'+i+card.id;
+    el.innerHTML=`
+      <span class="hpow">${card.power}</span>
+      <canvas id="${cvId}" width="70" height="89" style="width:100%;height:73%;display:block;"></canvas>
+      <div class="hnm">${card.name}</div>
+    `;
+    let _hLastClick=-1,_hLastTime=0;
+    el.onclick=()=>{
+      const now=Date.now();
+      if(_hLastClick===i && now-_hLastTime<400){
+        // double-click: auto place in first empty slot
+        const slot=S.pField.findIndex(f=>!f);
+        if(slot<0){toast('欄位已滿！');return;}
+        S.selIdx=i; placeCard(slot); return;
+      }
+      _hLastClick=i; _hLastTime=now;
+      S.selIdx=(S.selIdx===i)?-1:i;
+      renderHand();
+      if(S.selIdx>=0)logB('選中：'+S.hand[S.selIdx].name);
+    };
+    c.appendChild(el);
+    setTimeout(()=>{const cv=document.getElementById(cvId);if(cv){cv.width=70;cv.height=89;drawCardOnCanvas(cv,card);}applyCardFx(el,card.grade);},0);
+  });
+}
+
+function placeCard(slot){
+  if(!S.active){toast('請先開始對戰！');return;}
+  if(S.selIdx<0){toast('請先選擇手牌！');return;}
+  if(S.pField[slot]){toast('此欄位已有卡牌！');return;}
+  const card=S.hand.splice(S.selIdx,1)[0];
+  S.pField[slot]=card; S.selIdx=-1;
+  renderField(); renderHand();
+  logB('放置【'+card.name+'】到欄位 '+(slot+1));
+}
+
+function drawCard(){
+  if(!S.active){startBattle();return;}
+  const pool=DB.filter(c=>S.owned.has(c.id));
+  if(!pool.length){toast('先去開包收集卡牌！');return;}
+  const c=rand(pool);
+  S.hand.push({...c});
+  renderHand();
+  logB('抽到【'+c.name+'】ATK '+c.power);
+}
+
+function doAttack(){
+  if(!S.active){toast('請先開始對戰！');return;}
+  const pc=S.pField.filter(Boolean),ec=S.eField.filter(Boolean);
+  if(!pc.length){toast('請先放置卡牌！');return;}
+  const pt=pc.reduce((s,c)=>s+c.power,0),et=ec.reduce((s,c)=>s+c.power,0);
+  const ed=Math.max(0,pt-Math.floor(et*.3)),pd=Math.max(0,et-Math.floor(pt*.3));
+  logB('你方 '+pt+' ⚔️ 對方 '+et);
+  [0,1,2].forEach(i=>{if(S.eField[i]){const s=document.getElementById('es'+i);s.classList.add('hit');setTimeout(()=>s.classList.remove('hit'),500);}});
+  setTimeout(()=>{
+    S.eHP=Math.max(0,S.eHP-ed); S.pHP=Math.max(0,S.pHP-pd);
+    logB('對方受 '+ed+' 傷，你受 '+pd+' 傷');
+    // Give exp to attacking cards
+    S.pField.filter(Boolean).forEach(c=>{
+      const expGain = Math.max(1, Math.floor(ed/pc.length/5));
+      addExp(c, expGain);
+      // Update power display on field
+      const powEl = document.getElementById('pow_ps'+S.pField.indexOf(c));
+      // sync power back to DB owned card reference
+      const dbCard = DB.find(x=>x.id===c.id);
+      if(dbCard) dbCard.power = c.power;
+    });
+    updHP();
+    S.pField=[null,null,null]; S.eField=[null,null,null]; renderField();
+    if(S.eHP<=0){
+      S.active=false;
+      const rw=ri(100,200),gr=ri(3,8);
+      S.coins+=rw; S.gems+=gr; updCur();
+      particles(['🏆','✨','🎉','💖','⭐'],10);
+      showResult(true,'擊敗了 '+enemy.name+'！','🪙 +'+rw+'  💎 +'+gr);
+    } else if(S.pHP<=0){
+      S.active=false; showResult(false,'你被擊敗了…','繼續加油！');
+    } else setTimeout(enemyPlay,400);
+  },300);
+}
+
+function updHP(){
+  document.getElementById('phpbar').style.width=(S.pHP/S.maxHP*100)+'%';
+  document.getElementById('ehpbar').style.width=(S.eHP/enemy.hp*100)+'%';
+  document.getElementById('phptxt').textContent=S.pHP+'/'+S.maxHP;
+  document.getElementById('ehptxt').textContent=S.eHP+'/'+enemy.hp;
+}
+function logB(m){const l=document.getElementById('blog');const p=document.createElement('p');p.textContent=m;l.appendChild(p);l.scrollTop=l.scrollHeight;}
+function showResult(win,desc,rwd){
+  document.getElementById('rem').textContent=win?'🏆':'💔';
+  document.getElementById('rtitle').textContent=win?'勝利！':'敗北…';
+  document.getElementById('rtitle').className='rtitle '+(win?'win':'lose');
+  document.getElementById('rdesc').textContent=desc;
+  document.getElementById('rrwd').textContent=rwd;
+  document.getElementById('rmodal').classList.add('show');
+}
+function closeResult(){document.getElementById('rmodal').classList.remove('show');startBattle();}
+
+// ═══════════════════════════════════════════════
+//  IMPORT / EXPORT SAVE
+// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+//  SAVE HELPERS
+// ═══════════════════════════════════════════════
+function buildSaveData(){
+  return {
+    version:3,
+    coins:S.coins, gems:S.gems,
+    owned:[...S.owned],
+    hand:S.hand.map(c=>c.id),
+    levels:S.levels,
+    powers:DB.map(c=>({id:c.id,power:c.power})),
+  };
+}
+function applySaveData(d){
+  if(!d.version) throw new Error('格式錯誤');
+  S.coins=d.coins||0; S.gems=d.gems||0;
+  S.owned=new Set(d.owned||[]);
+  S.levels=d.levels||{};
+  if(d.powers) d.powers.forEach(p=>{const c=DB.find(x=>x.id===p.id);if(c)c.power=p.power;});
+  S.hand=(d.hand||[]).map(id=>DB.find(c=>c.id===id)).filter(Boolean).map(c=>({...c}));
+  updCur(); renderColl(); renderHand();
+}
+
+function exportSave(){
+  const blob=new Blob([JSON.stringify(buildSaveData(),null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='waifu-save.json';
+  a.click(); toast('✅ 存檔已匯出！');
+}
+
+function importSave(){
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{ applySaveData(JSON.parse(ev.target.result)); toast('✅ 存檔匯入成功！'); }
+      catch(err){ toast('❌ 存檔格式錯誤：'+err.message); }
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
+// ═══════════════════════════════════════════════
+//  GOOGLE DRIVE 雲端存檔
+// ═══════════════════════════════════════════════
+const CLIENT_ID = '375971288943-097rhbub5h2d06f1g5lqs60in6pofj22.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SAVE_FILENAME = 'waifu-cards-save.json';
+let _tokenClient = null;
+let _accessToken = null;
+let _gapiReady = false;
+let _gisReady = false;
+
+// 等兩個 SDK 都載入後才啟用
+function _checkReady(){
+  if(_gapiReady && _gisReady){
+    document.getElementById('btn-glogin').style.opacity='1';
+    document.getElementById('btn-glogin').disabled=false;
+  }
+}
+
+// 載入 gapi.client
+function _initGapi(){
+  gapi.load('client', async ()=>{
+    await gapi.client.init({});
+    gapi.client.setApiKey('');          // Drive file scope 不需要 API key
+    _gapiReady=true; _checkReady();
+  });
+}
+
+// 初始化 Google Identity Services token client
+function _initGis(){
+  _tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: async (resp)=>{
+      if(resp.error){ toast('❌ Google 授權失敗：'+resp.error); return; }
+      _accessToken = resp.access_token;
+      gapi.client.setToken({access_token: _accessToken});
+      _onSignedIn();
+    },
+  });
+  _gisReady=true; _checkReady();
+}
+
+function _onSignedIn(){
+  document.getElementById('btn-glogin').style.display='none';
+  document.getElementById('btn-gup').style.display='inline-block';
+  document.getElementById('btn-gdown').style.display='inline-block';
+  document.getElementById('btn-gout').style.display='inline-block';
+  toast('✅ 已登入 Google！');
+}
+
+function gSignIn(){
+  if(!_gapiReady||!_gisReady){ toast('⏳ Google SDK 載入中，請稍候…'); return; }
+  _tokenClient.requestAccessToken({prompt:'consent'});
+}
+
+function gSignOut(){
+  if(_accessToken) google.accounts.oauth2.revoke(_accessToken, ()=>{});
+  _accessToken=null;
+  gapi.client.setToken(null);
+  document.getElementById('btn-glogin').style.display='inline-block';
+  document.getElementById('btn-gup').style.display='none';
+  document.getElementById('btn-gdown').style.display='none';
+  document.getElementById('btn-gout').style.display='none';
+  toast('👋 已登出 Google');
+}
+
+// 尋找現有存檔 file id
+async function _findSaveFile(){
+  const resp = await gapi.client.request({
+    path:'https://www.googleapis.com/drive/v3/files',
+    params:{
+      q:`name='${SAVE_FILENAME}' and trashed=false`,
+      spaces:'drive',
+      fields:'files(id,name)',
+    },
+  });
+  const files = resp.result.files||[];
+  return files.length ? files[0].id : null;
+}
+
+// 上傳（新建或覆蓋）
+async function gdriveSave(){
+  if(!_accessToken){ toast('請先登入 Google！'); return; }
+  toast('⏳ 上傳中…');
+  try{
+    const json = JSON.stringify(buildSaveData(), null, 2);
+    const blob = new Blob([json],{type:'application/json'});
+    const existingId = await _findSaveFile();
+
+    let url, method;
+    const meta = JSON.stringify({name: SAVE_FILENAME, mimeType:'application/json'});
+    const form = new FormData();
+    form.append('metadata', new Blob([meta],{type:'application/json'}));
+    form.append('file', blob);
+
+    if(existingId){
+      url = `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart`;
+      method = 'PATCH';
+    } else {
+      url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+      method = 'POST';
+    }
+
+    const resp = await fetch(url,{
+      method,
+      headers:{'Authorization':'Bearer '+_accessToken},
+      body: form,
+    });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    toast('☁️ 雲端存檔成功！');
+  } catch(e){ toast('❌ 上傳失敗：'+e.message); }
+}
+
+// 下載並套用
+async function gdriveLoad(){
+  if(!_accessToken){ toast('請先登入 Google！'); return; }
+  toast('⏳ 下載中…');
+  try{
+    const fileId = await _findSaveFile();
+    if(!fileId){ toast('❌ 雲端沒有找到存檔！'); return; }
+    const resp = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      {headers:{'Authorization':'Bearer '+_accessToken}}
+    );
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data = await resp.json();
+    applySaveData(data);
+    toast('☁️ 雲端存檔載入成功！');
+  } catch(e){ toast('❌ 下載失敗：'+e.message); }
+}
+
+// SDK 載入回呼（由 gapi script onload 觸發）
+window.gapiLoaded  = _initGapi;
+window.gisLoaded   = _initGis;
+// 使用 defer 載入，用 onload 偵測
+document.addEventListener('DOMContentLoaded', ()=>{
+  const waitGapi = setInterval(()=>{ if(typeof gapi!=='undefined'){ clearInterval(waitGapi); _initGapi(); }},200);
+  const waitGis  = setInterval(()=>{ if(typeof google?.accounts?.oauth2!=='undefined'){ clearInterval(waitGis); _initGis(); }},200);
+});
+
+// ─── ZOOM CARD ───
+function zoomCard(card){
+  const modal = document.getElementById('zoom-modal');
+  const cv = document.getElementById('zoom-canvas');
+  cv.width=252; cv.height=320;
+  drawCardOnCanvas(cv, card);
+  // apply grade FX to zoom wrapper
+  const wrap = document.getElementById('zoom-fx-wrap');
+  // reset zoom canvas default shadow
+  cv.style.boxShadow = card.grade==='N' ? '0 0 40px var(--purple)' : 'none';
+  applyCardFx(wrap, card.grade);
+  // ensure wrap border-radius propagates
+  wrap.style.borderRadius='18px';
+  const lv = getCardLv(card.id);
+  const gd = GRADE[card.grade];
+  const expBar = Math.floor(lv.exp/lv.expNext*100);
+  document.getElementById('zoom-info').innerHTML=`
+    <div style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px">${card.name}</div>
+    <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
+      <span style="background:${gd.color};color:#fff;padding:2px 10px;border-radius:12px;font-weight:800;">${card.grade}</span>
+      <span style="color:#fbbf24;font-weight:700;">Lv.${lv.lv}</span>
+      <span style="color:#f87171;">⚔️ ${card.power}</span>
+    </div>
+    <div style="margin-top:8px;width:220px;background:rgba(255,255,255,.15);border-radius:20px;height:8px;overflow:hidden">
+      <div style="width:${expBar}%;height:100%;background:linear-gradient(90deg,#a855f7,#ec4899);transition:width .3s"></div>
+    </div>
+    <div style="font-size:.65rem;color:rgba(255,255,255,.5);margin-top:3px">EXP ${lv.exp}/${lv.expNext}</div>
+  `;
+  modal.style.display='flex';
+}
+
+// ─── LEVEL UP SYSTEM ───
+// Each card in owned set gets level tracked in S.levels = {id: {lv, exp}}
+// Attacking adds exp; leveling up increases power permanently
+function getCardLv(id){
+  if(!S.levels[id]) S.levels[id]={lv:1,exp:0,expNext:10};
+  return S.levels[id];
+}
+
+function addExp(card, expGain){
+  const lv = getCardLv(card.id);
+  lv.exp += expGain;
+  let leveled = false;
+  while(lv.exp >= lv.expNext){
+    lv.exp -= lv.expNext;
+    lv.lv++;
+    lv.expNext = Math.floor(lv.expNext * 1.5);
+    card.power = Math.floor(card.power * 1.08 + 2); // +8% +2 per level
+    leveled = true;
+    particles(['⬆️','💪','✨','⭐'],4);
+    toast('【'+card.name+'】升級！Lv.'+lv.lv+' ATK→'+card.power);
+  }
+  return leveled;
+}
+
+// ─── INIT ───
+function init(){
+  loadImages(()=>{
+    [1,8,22,43].forEach(id=>{
+      S.owned.add(id);
+      S.hand.push({...DB.find(c=>c.id===id)});
+    });
+    updCur();
+    startBattle();
+  });
+}
+init();
+
+</script>
+</body>
+</html>
